@@ -717,12 +717,32 @@ ge('scanFileIn').addEventListener('change', function(e) {
     ge('scanPreviewImg').className = 'scan-preview scan-preview-show';
     ge('scanRow1').style.display = 'none';
     ge('scanKeySection').style.display = 'none';
-    ge('scanStatusTxt').textContent = 'Reading your arbor slip...';
+    ge('scanStatusTxt').textContent = 'Compressing image...';
     ge('scanStatusTxt').className = 'scan-status scan-status-go';
-    var parts = dataUrl.split(',');
-    var b64 = parts[1];
-    var mt = file.type || 'image/jpeg';
-    callAI(b64, mt);
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var MAX = 1024;
+      var w = img.width;
+      var h = img.height;
+      if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+      else { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var compressed = canvas.toDataURL('image/jpeg', 0.85);
+      var b64 = compressed.split(',')[1];
+      ge('scanStatusTxt').textContent = 'Reading your arbor slip...';
+      callAI(b64, 'image/jpeg');
+    };
+    img.onerror = function() {
+      ge('scanStatusTxt').textContent = 'Could not load image. Try again.';
+      ge('scanStatusTxt').className = 'scan-status scan-status-err';
+      ge('scanRow1').style.display = '';
+      ge('scanKeySection').style.display = '';
+    };
+    img.src = dataUrl;
   };
   reader.readAsDataURL(file);
 });
@@ -759,6 +779,13 @@ function callAI(b64, mt) {
   xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
+    if (xhr.status === 0) {
+      ge('scanStatusTxt').textContent = 'Blocked by browser security. Make sure you are using the GitHub Pages link (https://), not the local file.';
+      ge('scanStatusTxt').className = 'scan-status scan-status-err';
+      ge('scanRow1').style.display = '';
+      ge('scanKeySection').style.display = '';
+      return;
+    }
     try {
       var data = JSON.parse(xhr.responseText);
       if (data.error) {
@@ -794,11 +821,18 @@ function callAI(b64, mt) {
     }
   };
   xhr.onerror = function() {
-    ge('scanStatusTxt').textContent = 'Network error. Check your connection.';
+    ge('scanStatusTxt').textContent = 'Network error — status: ' + xhr.status + '. Make sure your GitHub Pages URL is open (not the local file) and your API key is correct.';
     ge('scanStatusTxt').className = 'scan-status scan-status-err';
     ge('scanRow1').style.display = '';
     ge('scanKeySection').style.display = '';
   };
+  xhr.ontimeout = function() {
+    ge('scanStatusTxt').textContent = 'Request timed out. Try again.';
+    ge('scanStatusTxt').className = 'scan-status scan-status-err';
+    ge('scanRow1').style.display = '';
+    ge('scanKeySection').style.display = '';
+  };
+  xhr.timeout = 30000;
   xhr.send(body);
 }
 
