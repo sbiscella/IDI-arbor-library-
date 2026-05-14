@@ -761,7 +761,7 @@ function callAI(b64, mt) {
   var key = loadKey();
   var prompt = 'This is a handwritten rip saw arbor slip from a wood factory. Extract all info and return ONLY a JSON object with no extra text. Keys: name (string, arbor name/ID or empty), species (string, wood species or empty), sizes (array of strings, the rip sizes separated by | bars, include duplicates), offset (string, value after Off or Offset label, or empty), remainder (string, value after R. or R: label, or empty). Return only the JSON.';
   var body = JSON.stringify({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-5',
     max_tokens: 800,
     messages: [{
       role: 'user',
