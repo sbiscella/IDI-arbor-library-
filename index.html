@@ -416,12 +416,18 @@ ge('historyAddRunBtn').addEventListener('click', function() {
   if (!runs[key]) runs[key] = [];
   runs[key].unshift({ id: Date.now(), date: date, yield: yld, bfIn: bfIn, bfOut: bfOut, notes: notes });
   persistRuns();
-  ge('historyDate').value = '';
+  /* reset date to today safely */
+  var today = new Date();
+  var mm = today.getMonth() + 1;
+  var dd = today.getDate();
+  var mmStr = mm < 10 ? '0' + mm : String(mm);
+  var ddStr = dd < 10 ? '0' + dd : String(dd);
+  ge('historyDate').value = today.getFullYear() + '-' + mmStr + '-' + ddStr;
   ge('historyYield').value = '';
   ge('historyBfIn').value = '';
   ge('historyBfOut').value = '';
   ge('historyNotes').value = '';
-  showHistoryMsg('Run added!', true);
+  showHistoryMsg('Run saved!', true);
   renderRunList();
 });
 
@@ -459,9 +465,11 @@ function openHistoryModal(id) {
   ge('historyModalSpecies').textContent = a.species || '';
   ge('historyMsg').textContent = '';
   var today = new Date();
-  var mm = String(today.getMonth() + 1).padStart(2, '0');
-  var dd = String(today.getDate()).padStart(2, '0');
-  ge('historyDate').value = today.getFullYear() + '-' + mm + '-' + dd;
+  var mm = today.getMonth() + 1;
+  var dd = today.getDate();
+  var mmStr = mm < 10 ? '0' + mm : String(mm);
+  var ddStr = dd < 10 ? '0' + dd : String(dd);
+  ge('historyDate').value = today.getFullYear() + '-' + mmStr + '-' + ddStr;
   ge('historyYield').value = '';
   ge('historyBfIn').value = '';
   ge('historyBfOut').value = '';
@@ -527,12 +535,24 @@ function renderHistoryList() {
   var el = ge('historyArborList');
   var q = ge('historySearch').value.trim().toLowerCase();
   if (!arbors.length) { el.innerHTML = '<div class="empty">No arbors yet — add some in Manage</div>'; return; }
-  var html = '';
+
+  /* build filtered list with run counts */
+  var filtered = [];
   for (var i = 0; i < arbors.length; i++) {
     var a = arbors[i];
     if (q && (a.name || '').toLowerCase().indexOf(q) === -1 && (a.species || '').toLowerCase().indexOf(q) === -1) continue;
     var key = String(a.id);
     var list = runs[key] || [];
+    filtered.push({ a: a, list: list });
+  }
+
+  /* sort by most runs descending */
+  filtered.sort(function(x, y) { return y.list.length - x.list.length; });
+
+  var html = '';
+  for (var fi = 0; fi < filtered.length; fi++) {
+    var a = filtered[fi].a;
+    var list = filtered[fi].list;
     var lastRun = list.length ? list[0] : null;
     var yieldTotal = 0; var yieldCount = 0;
     for (var j = 0; j < list.length; j++) {
