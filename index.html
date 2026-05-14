@@ -26,7 +26,11 @@ html, body { margin: 0; padding: 0; background: #f0f2f5; font-family: -apple-sys
 input[type=text], input[type=password] { width: 100%; height: 46px; border: 1px solid #B4B2A9; border-radius: 10px; padding: 0 14px; font-size: 16px; background: #fff; color: #111; -webkit-appearance: none; }
 input[type=text]:focus, input[type=password]:focus { outline: none; border-color: #0C2D5A; }
 .tags-box { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; gap: 7px; -webkit-align-items: center; align-items: center; padding: 9px; border: 1px solid #e0e0e0; border-radius: 10px; min-height: 48px; background: #fafafa; }
-.tag { background: #0C2D5A; color: #E6F1FB; font-size: 14px; padding: 6px 12px; border-radius: 20px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; gap: 6px; }
+.tag { background: #0C2D5A; color: #E6F1FB; font-size: 14px; padding: 6px 12px; border-radius: 20px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; gap: 6px; cursor: grab; -webkit-user-select: none; user-select: none; touch-action: none; }
+.tag.dragging { opacity: 0.4; }
+.tag.drag-over { outline: 2px solid #85B7EB; }
+.tag-label { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgba(180,210,244,0.5); }
+.tag-drag { font-size: 14px; color: #85B7EB; padding: 0 2px; cursor: grab; }
 .tag-x { cursor: pointer; font-size: 20px; line-height: 1; color: #85B7EB; padding: 0 4px; min-width: 28px; min-height: 28px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
 .search-tag { background: #185FA5; color: #E6F1FB; font-size: 14px; padding: 6px 12px; border-radius: 20px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; gap: 6px; }
 .add-size-btn { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; gap: 10px; padding: 10px 14px; border: 1.5px dashed #185FA5; border-radius: 10px; background: #f5f9ff; cursor: pointer; color: #185FA5; font-size: 15px; font-weight: 600; min-height: 50px; margin-top: 8px; -webkit-appearance: none; width: 100%; text-align: left; }
@@ -358,13 +362,15 @@ ge('arborList').addEventListener('click', function(e) {
   }
 });
 
-/* ADD TAGS */
+/* ADD TAGS - tap label to edit, tap X to remove */
 ge('addTagsBox').addEventListener('click', function(e) {
   var el = e.target;
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 5; i++) {
     if (!el || el === ge('addTagsBox')) break;
-    var idx = el.getAttribute('data-rmidx');
-    if (idx !== null) { addTags.splice(parseInt(idx, 10), 1); renderAddTags(); return; }
+    var rmIdx = el.getAttribute('data-rmidx');
+    var editIdx = el.getAttribute('data-editidx');
+    if (rmIdx !== null) { addTags.splice(parseInt(rmIdx, 10), 1); renderAddTags(); return; }
+    if (editIdx !== null) { openKpEdit(parseInt(editIdx, 10)); return; }
     el = el.parentNode;
   }
 });
@@ -434,7 +440,11 @@ function kpAdd() {
 function kpDone() {
   var v = kpVal.trim();
   if (v) {
-    if (kpMode === 'sizes') { addTags.push(v); renderAddTags(); }
+    if (kpMode === 'edit' && editingTagIdx >= 0) {
+      addTags[editingTagIdx] = v;
+      editingTagIdx = -1;
+      renderAddTags();
+    } else if (kpMode === 'sizes') { addTags.push(v); renderAddTags(); }
     else if (kpMode === 'offset') { curOffset = v; refreshOffset(); }
     else if (kpMode === 'remainder') { curRemainder = v; refreshRemainder(); }
     else if (kpMode === 'search' && searchTags.length < 4) { searchTags.push(v); renderSearchTags(); }
@@ -443,22 +453,130 @@ function kpDone() {
 }
 
 /* RENDER TAGS */
+var dragSrcIdx = -1;
+var dragOverIdx = -1;
+
 function renderAddTags() {
   var box = ge('addTagsBox');
   box.innerHTML = '';
   for (var i = 0; i < addTags.length; i++) {
     var d = document.createElement('div');
     d.className = 'tag';
-    var t = document.createTextNode(addTags[i] + ' ');
+    d.setAttribute('data-tagidx', String(i));
+    d.setAttribute('draggable', 'true');
+
+    var grip = document.createElement('span');
+    grip.className = 'tag-drag';
+    grip.textContent = '\u2630';
+
+    var lbl = document.createElement('span');
+    lbl.className = 'tag-label';
+    lbl.setAttribute('data-editidx', String(i));
+    lbl.textContent = addTags[i];
+
     var x = document.createElement('span');
     x.className = 'tag-x';
     x.setAttribute('data-rmidx', String(i));
     x.textContent = '\u00d7';
-    d.appendChild(t);
+
+    d.appendChild(grip);
+    d.appendChild(lbl);
     d.appendChild(x);
     box.appendChild(d);
+
+    /* Desktop drag events */
+    d.addEventListener('dragstart', function(e) {
+      dragSrcIdx = parseInt(this.getAttribute('data-tagidx'), 10);
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    d.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      var all = box.querySelectorAll('.tag');
+      for (var k = 0; k < all.length; k++) all[k].classList.remove('drag-over');
+    });
+    d.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      var all = box.querySelectorAll('.tag');
+      for (var k = 0; k < all.length; k++) all[k].classList.remove('drag-over');
+      this.classList.add('drag-over');
+      dragOverIdx = parseInt(this.getAttribute('data-tagidx'), 10);
+    });
+    d.addEventListener('drop', function(e) {
+      e.preventDefault();
+      var toIdx = parseInt(this.getAttribute('data-tagidx'), 10);
+      if (dragSrcIdx !== -1 && dragSrcIdx !== toIdx) {
+        var moved = addTags.splice(dragSrcIdx, 1)[0];
+        addTags.splice(toIdx, 0, moved);
+        dragSrcIdx = -1; dragOverIdx = -1;
+        renderAddTags();
+      }
+    });
+
+    /* Touch drag events */
+    (function(el) {
+      var startY, startX, startIdx, clone, lastOver;
+      el.addEventListener('touchstart', function(e) {
+        if (e.target.getAttribute('data-rmidx') !== null) return;
+        if (e.target.getAttribute('data-editidx') !== null) return;
+        startIdx = parseInt(el.getAttribute('data-tagidx'), 10);
+        var touch = e.touches[0];
+        startX = touch.clientX; startY = touch.clientY;
+        clone = el.cloneNode(true);
+        clone.style.cssText = 'position:fixed;z-index:9999;opacity:0.85;pointer-events:none;margin:0;top:' + (touch.clientY - 20) + 'px;left:' + (touch.clientX - 40) + 'px;';
+        document.body.appendChild(clone);
+        el.classList.add('dragging');
+      }, { passive: true });
+      el.addEventListener('touchmove', function(e) {
+        if (startIdx === undefined || startIdx === -1) return;
+        e.preventDefault();
+        var touch = e.touches[0];
+        clone.style.top = (touch.clientY - 20) + 'px';
+        clone.style.left = (touch.clientX - 40) + 'px';
+        var tags = box.querySelectorAll('.tag:not(.dragging)');
+        var found = null;
+        for (var k = 0; k < tags.length; k++) {
+          var r = tags[k].getBoundingClientRect();
+          if (touch.clientX >= r.left && touch.clientX <= r.right && touch.clientY >= r.top && touch.clientY <= r.bottom) {
+            found = tags[k]; break;
+          }
+        }
+        if (lastOver && lastOver !== found) lastOver.classList.remove('drag-over');
+        if (found) { found.classList.add('drag-over'); lastOver = found; }
+      }, { passive: false });
+      el.addEventListener('touchend', function() {
+        if (startIdx === undefined || startIdx === -1) return;
+        if (clone) { document.body.removeChild(clone); clone = null; }
+        el.classList.remove('dragging');
+        if (lastOver) {
+          lastOver.classList.remove('drag-over');
+          var toIdx = parseInt(lastOver.getAttribute('data-tagidx'), 10);
+          if (!isNaN(toIdx) && toIdx !== startIdx) {
+            var moved = addTags.splice(startIdx, 1)[0];
+            addTags.splice(toIdx, 0, moved);
+            renderAddTags();
+          }
+          lastOver = null;
+        }
+        startIdx = -1;
+      });
+    })(d);
   }
 }
+
+var editingTagIdx = -1;
+function openKpEdit(idx) {
+  editingTagIdx = idx;
+  kpMode = 'edit';
+  kpVal = addTags[idx] || '';
+  updateKpDisp();
+  ge('kpLbl').textContent = 'Edit rip size';
+  ge('kpActs').innerHTML = '<button class="kp-done" data-act="done">Update &#10003;</button>';
+  ge('kpOv').classList.add('open');
+}
+
+
 function renderSearchTags() {
   var box = ge('searchTagsBox');
   box.innerHTML = '';
