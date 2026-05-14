@@ -75,8 +75,8 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
 .kp-lbl { font-size: 15px; font-weight: 700; color: #0C2D5A; }
 .kp-cancel { font-size: 15px; font-weight: 600; color: #888; cursor: pointer; background: #e0e0e5; border-radius: 20px; padding: 6px 14px; min-height: 36px; border: none; -webkit-appearance: none; }
 .kp-disp-wrap { margin: 0 12px 10px; background: #fff; border-radius: 12px; border: 1.5px solid #B5D4F4; padding: 10px 16px; min-height: 56px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
-.kp-disp { font-size: 32px; font-weight: 700; color: #0C2D5A; letter-spacing: 1px; text-align: center; }
-.kp-disp-ph { font-size: 18px; font-weight: 400; color: #bbb; }
+.kp-disp { font-size: 32px; font-weight: 700; color: #0C2D5A; letter-spacing: 1px; text-align: center; -webkit-text-size-adjust: none; }
+.kp-disp-ph { font-size: 20px; font-weight: 400; color: #bbb; -webkit-text-size-adjust: none; }
 .kp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 12px 10px; }
 .kp-key { height: 64px; border-radius: 12px; font-size: 24px; font-weight: 600; cursor: pointer; border: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; -webkit-appearance: none; }
 .kp-key:active { opacity: .55; }
@@ -139,8 +139,9 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
   </div>
 
   <div class="tabs">
-    <button class="tab active" id="tabManageBtn">Manage arbors</button>
-    <button class="tab" id="tabSearchBtn">Search sizes</button>
+    <button class="tab active" id="tabManageBtn">Manage</button>
+    <button class="tab" id="tabSearchBtn">Search</button>
+    <button class="tab" id="tabHistoryBtn">History</button>
   </div>
 
   <div id="tabManage">
@@ -196,6 +197,10 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
     <div class="panel">
       <p class="panel-title">Search arbors</p>
       <div class="field">
+        <label>Arbor name (optional)</label>
+        <input type="text" id="searchName" placeholder="e.g. Arbor A or 1-20-2034" autocomplete="off" />
+      </div>
+      <div class="field">
         <label>Rip sizes (up to 4)</label>
         <div class="tags-box" id="searchTagsBox"></div>
         <button class="add-size-btn" id="openSearchKp"><span class="add-size-plus">+</span> Tap to add a search size</button>
@@ -213,6 +218,59 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
     <div id="searchResults"><div class="empty">Enter sizes above and tap Search</div></div>
   </div>
 
+  <!-- HISTORY TAB -->
+  <div id="tabHistory" style="display:none">
+    <div class="panel">
+      <p class="panel-title">Arbor run history</p>
+      <div class="field">
+        <label>Search arbor name</label>
+        <input type="text" id="historySearch" placeholder="Type to filter arbors..." autocomplete="off" />
+      </div>
+    </div>
+    <div id="historyArborList"></div>
+  </div>
+
+</div>
+
+<!-- HISTORY RUN MODAL -->
+<div class="slip-ov" id="historyOv">
+  <div class="slip-box" style="max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div class="slip-top">
+      <span class="slip-name" id="historyModalName"></span>
+      <button class="slip-close" id="historyCloseBtn">Close</button>
+    </div>
+    <p class="slip-sp" id="historyModalSpecies"></p>
+    <div style="border-bottom:1px solid #eee;padding-bottom:14px;margin-bottom:14px;">
+      <p style="font-size:11px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.07em;margin:0 0 10px;">Add run</p>
+      <div style="display:-webkit-flex;display:flex;gap:8px;margin-bottom:8px;">
+        <div style="-webkit-flex:1;flex:1;">
+          <p style="font-size:12px;color:#555;font-weight:500;margin:0 0 4px;">Date</p>
+          <input type="date" id="historyDate" style="width:100%;height:42px;border:1px solid #B4B2A9;border-radius:10px;padding:0 10px;font-size:15px;background:#fff;color:#111;-webkit-appearance:none;" />
+        </div>
+        <div style="-webkit-flex:1;flex:1;">
+          <p style="font-size:12px;color:#555;font-weight:500;margin:0 0 4px;">Yield %</p>
+          <input type="text" id="historyYield" placeholder="e.g. 87.5" autocomplete="off" inputmode="decimal" style="width:100%;height:42px;border:1px solid #B4B2A9;border-radius:10px;padding:0 10px;font-size:15px;background:#fff;color:#111;-webkit-appearance:none;" />
+        </div>
+      </div>
+      <div style="display:-webkit-flex;display:flex;gap:8px;margin-bottom:8px;">
+        <div style="-webkit-flex:1;flex:1;">
+          <p style="font-size:12px;color:#555;font-weight:500;margin:0 0 4px;">BF in</p>
+          <input type="text" id="historyBfIn" placeholder="e.g. 1200" autocomplete="off" inputmode="decimal" style="width:100%;height:42px;border:1px solid #B4B2A9;border-radius:10px;padding:0 10px;font-size:15px;background:#fff;color:#111;-webkit-appearance:none;" />
+        </div>
+        <div style="-webkit-flex:1;flex:1;">
+          <p style="font-size:12px;color:#555;font-weight:500;margin:0 0 4px;">BF out</p>
+          <input type="text" id="historyBfOut" placeholder="e.g. 1044" autocomplete="off" inputmode="decimal" style="width:100%;height:42px;border:1px solid #B4B2A9;border-radius:10px;padding:0 10px;font-size:15px;background:#fff;color:#111;-webkit-appearance:none;" />
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <p style="font-size:12px;color:#555;font-weight:500;margin:0 0 4px;">Notes</p>
+        <textarea id="historyNotes" placeholder="Optional run notes..." style="width:100%;min-height:60px;border:1px solid #B4B2A9;border-radius:10px;padding:8px 10px;font-size:15px;background:#fff;color:#111;-webkit-appearance:none;resize:none;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;"></textarea>
+      </div>
+      <button class="btn btn-prim" id="historyAddRunBtn" style="width:100%;">+ Add run</button>
+      <p class="msg" id="historyMsg"></p>
+    </div>
+    <div id="historyRunList"></div>
+  </div>
 </div>
 
 <!-- SCAN MODAL -->
@@ -324,12 +382,201 @@ function esc(s) {
 /* TABS */
 ge('tabManageBtn').addEventListener('click', function() { switchTab('manage'); });
 ge('tabSearchBtn').addEventListener('click', function() { switchTab('search'); });
+ge('tabHistoryBtn').addEventListener('click', function() { switchTab('history'); });
 function switchTab(t) {
   ge('tabManage').style.display = t === 'manage' ? '' : 'none';
   ge('tabSearch').style.display = t === 'search' ? '' : 'none';
+  ge('tabHistory').style.display = t === 'history' ? '' : 'none';
   ge('tabManageBtn').className = 'tab' + (t === 'manage' ? ' active' : '');
   ge('tabSearchBtn').className = 'tab' + (t === 'search' ? ' active' : '');
+  ge('tabHistoryBtn').className = 'tab' + (t === 'history' ? ' active' : '');
+  if (t === 'history') renderHistoryList();
 }
+
+/* HISTORY */
+var historyArborId = null;
+var runs = {};
+try { runs = JSON.parse(localStorage.getItem('idi_runs_v1') || '{}'); } catch(ex) {}
+function persistRuns() { try { localStorage.setItem('idi_runs_v1', JSON.stringify(runs)); } catch(ex) {} }
+
+ge('historySearch').addEventListener('input', function() { renderHistoryList(); });
+
+ge('historyCloseBtn').addEventListener('click', function() { ge('historyOv').classList.remove('open'); });
+ge('historyOv').addEventListener('click', function(e) { if (e.target === ge('historyOv')) ge('historyOv').classList.remove('open'); });
+
+ge('historyAddRunBtn').addEventListener('click', function() {
+  if (!historyArborId) return;
+  var date = ge('historyDate').value.trim();
+  var yld = ge('historyYield').value.trim();
+  var bfIn = ge('historyBfIn').value.trim();
+  var bfOut = ge('historyBfOut').value.trim();
+  var notes = ge('historyNotes').value.trim();
+  if (!date) { showHistoryMsg('Please select a date.', false); return; }
+  var key = String(historyArborId);
+  if (!runs[key]) runs[key] = [];
+  runs[key].unshift({ id: Date.now(), date: date, yield: yld, bfIn: bfIn, bfOut: bfOut, notes: notes });
+  persistRuns();
+  ge('historyDate').value = '';
+  ge('historyYield').value = '';
+  ge('historyBfIn').value = '';
+  ge('historyBfOut').value = '';
+  ge('historyNotes').value = '';
+  showHistoryMsg('Run added!', true);
+  renderRunList();
+});
+
+ge('historyRunList').addEventListener('click', function(e) {
+  var el = e.target;
+  for (var i = 0; i < 5; i++) {
+    if (!el || el === ge('historyRunList')) break;
+    var act = el.getAttribute('data-runact');
+    var rid = el.getAttribute('data-runid');
+    if (act === 'del' && rid) {
+      if (!confirm('Delete this run?')) return;
+      var key = String(historyArborId);
+      var next = [];
+      for (var j = 0; j < runs[key].length; j++) { if (String(runs[key][j].id) !== rid) next.push(runs[key][j]); }
+      runs[key] = next;
+      persistRuns(); renderRunList(); return;
+    }
+    el = el.parentNode;
+  }
+});
+
+function showHistoryMsg(msg, ok) {
+  var el = ge('historyMsg');
+  el.className = 'msg ' + (ok ? 'msg-ok' : 'msg-err');
+  el.textContent = msg;
+  setTimeout(function() { el.textContent = ''; }, 2500);
+}
+
+function openHistoryModal(id) {
+  historyArborId = id;
+  var a = null;
+  for (var i = 0; i < arbors.length; i++) { if (arbors[i].id === id) { a = arbors[i]; break; } }
+  if (!a) return;
+  ge('historyModalName').textContent = a.name;
+  ge('historyModalSpecies').textContent = a.species || '';
+  ge('historyMsg').textContent = '';
+  var today = new Date();
+  var mm = String(today.getMonth() + 1).padStart(2, '0');
+  var dd = String(today.getDate()).padStart(2, '0');
+  ge('historyDate').value = today.getFullYear() + '-' + mm + '-' + dd;
+  ge('historyYield').value = '';
+  ge('historyBfIn').value = '';
+  ge('historyBfOut').value = '';
+  ge('historyNotes').value = '';
+  renderRunList();
+  ge('historyOv').classList.add('open');
+}
+
+function renderRunList() {
+  var el = ge('historyRunList');
+  var key = String(historyArborId);
+  var list = runs[key] || [];
+  if (!list.length) { el.innerHTML = '<div class="empty" style="padding:1rem 0;">No runs recorded yet</div>'; return; }
+
+  /* calc avg yield */
+  var yieldTotal = 0; var yieldCount = 0;
+  for (var i = 0; i < list.length; i++) {
+    var y = parseFloat(list[i].yield);
+    if (!isNaN(y)) { yieldTotal += y; yieldCount++; }
+  }
+  var avgHtml = '';
+  if (yieldCount > 0) {
+    var avg = (yieldTotal / yieldCount).toFixed(1);
+    avgHtml = '<div style="background:#E6F1FB;border-radius:10px;padding:8px 12px;margin-bottom:12px;display:-webkit-flex;display:flex;gap:16px;">' +
+      '<div><p style="font-size:11px;color:#185FA5;font-weight:700;margin:0;">AVG YIELD</p><p style="font-size:20px;font-weight:700;color:#0C2D5A;margin:0;">' + avg + '%</p></div>' +
+      '<div><p style="font-size:11px;color:#185FA5;font-weight:700;margin:0;">TOTAL RUNS</p><p style="font-size:20px;font-weight:700;color:#0C2D5A;margin:0;">' + list.length + '</p></div>' +
+      '</div>';
+  }
+
+  var html = avgHtml;
+  for (var j = 0; j < list.length; j++) {
+    var r = list[j];
+    var dispDate = r.date || '';
+    if (dispDate) {
+      var parts = dispDate.split('-');
+      if (parts.length === 3) dispDate = parts[1] + '/' + parts[2] + '/' + parts[0];
+    }
+    var yldColor = '';
+    var yv = parseFloat(r.yield);
+    if (!isNaN(yv)) { yldColor = yv >= 90 ? '#0F6E56' : yv >= 80 ? '#185FA5' : '#a32d2d'; }
+
+    html += '<div style="border:1px solid #eee;border-radius:12px;padding:12px;margin-bottom:8px;">';
+    html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:flex-start;align-items:flex-start;margin-bottom:6px;">';
+    html += '<div>';
+    html += '<p style="font-size:14px;font-weight:700;color:#0C2D5A;margin:0;">' + esc(dispDate) + '</p>';
+    if (r.yield) html += '<p style="font-size:20px;font-weight:700;color:' + yldColor + ';margin:2px 0 0;">&#x25C6; ' + esc(r.yield) + '%</p>';
+    html += '</div>';
+    html += '<button style="background:transparent;border:1px solid #a32d2d;color:#a32d2d;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;" data-runact="del" data-runid="' + r.id + '">Delete</button>';
+    html += '</div>';
+    if (r.bfIn || r.bfOut) {
+      html += '<div style="display:-webkit-flex;display:flex;gap:12px;margin-bottom:4px;">';
+      if (r.bfIn) html += '<div><p style="font-size:11px;color:#888;margin:0;">BF IN</p><p style="font-size:13px;font-weight:600;color:#111;margin:0;">' + esc(r.bfIn) + '</p></div>';
+      if (r.bfOut) html += '<div><p style="font-size:11px;color:#888;margin:0;">BF OUT</p><p style="font-size:13px;font-weight:600;color:#111;margin:0;">' + esc(r.bfOut) + '</p></div>';
+      html += '</div>';
+    }
+    if (r.notes) html += '<p style="font-size:12px;color:#555;margin:4px 0 0;border-top:1px solid #f0f0f0;padding-top:6px;">' + esc(r.notes) + '</p>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function renderHistoryList() {
+  var el = ge('historyArborList');
+  var q = ge('historySearch').value.trim().toLowerCase();
+  if (!arbors.length) { el.innerHTML = '<div class="empty">No arbors yet — add some in Manage</div>'; return; }
+  var html = '';
+  for (var i = 0; i < arbors.length; i++) {
+    var a = arbors[i];
+    if (q && (a.name || '').toLowerCase().indexOf(q) === -1 && (a.species || '').toLowerCase().indexOf(q) === -1) continue;
+    var key = String(a.id);
+    var list = runs[key] || [];
+    var lastRun = list.length ? list[0] : null;
+    var yieldTotal = 0; var yieldCount = 0;
+    for (var j = 0; j < list.length; j++) {
+      var y = parseFloat(list[j].yield);
+      if (!isNaN(y)) { yieldTotal += y; yieldCount++; }
+    }
+    html += '<div class="card" style="cursor:pointer;" data-histid="' + a.id + '">';
+    html += '<div class="card-head">';
+    html += '<div style="-webkit-flex:1;flex:1;min-width:0"><div class="card-name">' + esc(a.name) + '</div>';
+    if (a.species) html += '<span class="card-species">' + esc(a.species) + '</span>';
+    html += '</div>';
+    if (yieldCount > 0) {
+      var avg = (yieldTotal / yieldCount).toFixed(1);
+      var avgColor = parseFloat(avg) >= 90 ? '#0F6E56' : parseFloat(avg) >= 80 ? '#185FA5' : '#a32d2d';
+      html += '<div style="text-align:right;-webkit-flex-shrink:0;flex-shrink:0;">';
+      html += '<p style="font-size:11px;color:#888;margin:0;">Avg yield</p>';
+      html += '<p style="font-size:18px;font-weight:700;color:' + avgColor + ';margin:0;">' + avg + '%</p>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div style="display:-webkit-flex;display:flex;gap:16px;margin-top:4px;">';
+    html += '<div><p style="font-size:11px;color:#888;margin:0;">Runs</p><p style="font-size:13px;font-weight:700;color:#0C2D5A;margin:0;">' + list.length + '</p></div>';
+    if (lastRun) {
+      var dispDate = lastRun.date || '';
+      if (dispDate) { var dp = dispDate.split('-'); if (dp.length === 3) dispDate = dp[1] + '/' + dp[2] + '/' + dp[0]; }
+      html += '<div><p style="font-size:11px;color:#888;margin:0;">Last run</p><p style="font-size:13px;font-weight:700;color:#0C2D5A;margin:0;">' + esc(dispDate) + '</p></div>';
+    }
+    html += '</div>';
+    html += '<p style="font-size:12px;color:#185FA5;font-weight:600;margin:8px 0 0;">Tap to view / add runs ›</p>';
+    html += '</div>';
+  }
+  if (!html) html = '<div class="empty">No arbors match</div>';
+  el.innerHTML = html;
+}
+
+ge('historyArborList').addEventListener('click', function(e) {
+  var el = e.target;
+  for (var i = 0; i < 6; i++) {
+    if (!el || el === ge('historyArborList')) break;
+    var hid = el.getAttribute('data-histid');
+    if (hid) { openHistoryModal(parseInt(hid, 10)); return; }
+    el = el.parentNode;
+  }
+});
 
 /* FORM BUTTONS */
 ge('saveBtn').addEventListener('click', doSave);
@@ -411,6 +658,9 @@ ge('kpActs').addEventListener('click', function(e) {
 });
 
 function openKp(mode) {
+  /* prevent iOS zoom when keypad opens */
+  var vp = document.querySelector('meta[name=viewport]');
+  if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
   kpMode = mode;
   kpVal = '';
   updateKpDisp();
@@ -567,6 +817,8 @@ function renderAddTags() {
 
 var editingTagIdx = -1;
 function openKpEdit(idx) {
+  var vp = document.querySelector('meta[name=viewport]');
+  if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
   editingTagIdx = idx;
   kpMode = 'edit';
   kpVal = addTags[idx] || '';
@@ -730,16 +982,26 @@ function doClearSearch() {
   ge('searchSpecies').value = '';
   ge('searchResults').innerHTML = '<div class="empty">Enter sizes above and tap Search</div>';
 }
+function doClearSearch() {
+  searchTags = []; renderSearchTags();
+  ge('searchName').value = '';
+  ge('searchSpecies').value = '';
+  ge('searchResults').innerHTML = '<div class="empty">Enter sizes above and tap Search</div>';
+}
 function doSearch() {
   var queries = [];
   for (var qi = 0; qi < searchTags.length; qi++) queries.push(searchTags[qi].toLowerCase().trim());
+  var nameQ = ge('searchName').value.trim().toLowerCase();
   var speciesQ = ge('searchSpecies').value.trim().toLowerCase();
   var container = ge('searchResults');
-  if (!queries.length && !speciesQ) { container.innerHTML = '<div class="empty">Enter a size or species to search</div>'; return; }
+  if (!queries.length && !speciesQ && !nameQ) { container.innerHTML = '<div class="empty">Enter a name, size, or species to search</div>'; return; }
   if (!arbors.length) { container.innerHTML = '<div class="empty">No arbors in database yet</div>'; return; }
   var pool = [];
   for (var pi = 0; pi < arbors.length; pi++) {
-    if (!speciesQ || (arbors[pi].species || '').toLowerCase().indexOf(speciesQ) !== -1) pool.push(arbors[pi]);
+    var a = arbors[pi];
+    var nameOk = !nameQ || (a.name || '').toLowerCase().indexOf(nameQ) !== -1;
+    var specOk = !speciesQ || (a.species || '').toLowerCase().indexOf(speciesQ) !== -1;
+    if (nameOk && specOk) pool.push(a);
   }
   var results = [];
   if (queries.length) {
