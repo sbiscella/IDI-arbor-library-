@@ -78,7 +78,8 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
 .kp-disp { font-size: 32px; font-weight: 700; color: #0C2D5A; letter-spacing: 1px; text-align: center; -webkit-text-size-adjust: none; }
 .kp-disp-ph { font-size: 20px; font-weight: 400; color: #bbb; -webkit-text-size-adjust: none; }
 .kp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 12px 10px; }
-.kp-key { height: 64px; border-radius: 12px; font-size: 24px; font-weight: 600; cursor: pointer; border: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; -webkit-appearance: none; }
+input[type=text], input[type=password], input[type=date], textarea, select { font-size: 16px !important; }
+.kp-key { height: 64px; border-radius: 12px; font-size: 24px; font-weight: 600; cursor: pointer; border: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; -webkit-appearance: none; touch-action: manipulation; }
 .kp-key:active { opacity: .55; }
 .kp-n { background: #fff; color: #111; box-shadow: 0 1px 0 #c8c8cc; }
 .kp-s { background: #D1D1D6; color: #0C2D5A; font-size: 20px; font-weight: 700; box-shadow: 0 1px 0 #aeaeb2; }
@@ -598,6 +599,22 @@ ge('historyArborList').addEventListener('click', function(e) {
   }
 });
 
+/* SEARCH RESULTS delegation */
+ge('searchResults').addEventListener('click', function(e) {
+  var el = e.target;
+  for (var i = 0; i < 5; i++) {
+    if (!el || el === ge('searchResults')) break;
+    var act = el.getAttribute('data-action');
+    var id = parseInt(el.getAttribute('data-id'), 10);
+    if (act && !isNaN(id)) {
+      if (act === 'view') doView(id);
+      if (act === 'edit') { doEdit(id); switchTab('manage'); }
+      return;
+    }
+    el = el.parentNode;
+  }
+});
+
 /* FORM BUTTONS */
 ge('saveBtn').addEventListener('click', doSave);
 ge('clearBtn').addEventListener('click', doClear);
@@ -662,9 +679,21 @@ var kpMap = { k0:'0',k1:'1',k2:'2',k3:'3',k4:'4',k5:'5',k6:'6',k7:'7',k8:'8',k9:
 var kpIds = ['k0','k1','k2','k3','k4','k5','k6','k7','k8','k9','kDash','kSlash','kDot','kQuote'];
 for (var ki = 0; ki < kpIds.length; ki++) {
   (function(kid) {
+    ge(kid).addEventListener('touchstart', function(e) { e.preventDefault(); kpVal += kpMap[kid]; updateKpDisp(); }, { passive: false });
     ge(kid).addEventListener('click', function() { kpVal += kpMap[kid]; updateKpDisp(); });
   })(kpIds[ki]);
 }
+ge('kDel').addEventListener('touchstart', function(e) { e.preventDefault(); kpVal = kpVal.slice(0, -1); updateKpDisp(); }, { passive: false });
+ge('kpActs').addEventListener('touchstart', function(e) {
+  var btn = e.target;
+  for (var i = 0; i < 4; i++) {
+    if (!btn || btn === ge('kpActs')) break;
+    var act = btn.getAttribute('data-act');
+    if (act === 'add') { e.preventDefault(); kpAdd(); return; }
+    if (act === 'done') { e.preventDefault(); kpDone(); return; }
+    btn = btn.parentNode;
+  }
+}, { passive: false });
 
 ge('kpActs').addEventListener('click', function(e) {
   var el = e.target;
@@ -1067,6 +1096,10 @@ function doSearch() {
     if (a2.offset) html += '<div class="meta-row"><span class="meta-lbl">Offset:</span><span class="meta-val">' + esc(a2.offset) + '</span></div>';
     if (a2.remainder) html += '<div class="meta-row"><span class="meta-lbl">Remainder:</span><span class="meta-val">' + esc(a2.remainder) + '</span></div>';
     if (a2.notes) html += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #eee;font-size:12px;color:#555;">' + esc(a2.notes) + '</div>';
+    html += '<div class="btn-row" style="margin-top:10px;">';
+    html += '<button class="btn btn-sec btn-sm" data-action="view" data-id="' + a2.id + '">View</button>';
+    html += '<button class="btn btn-sec btn-sm" data-action="edit" data-id="' + a2.id + '">Edit</button>';
+    html += '</div>';
     html += '</div>';
   }
   container.innerHTML = html;
