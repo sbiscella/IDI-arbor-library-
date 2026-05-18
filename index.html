@@ -237,10 +237,10 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
 <div class="scan-ov" id="scanOv">
   <div class="scan-box">
     <p class="scan-title">&#128247; Scan arbor paper</p>
-    <div id="scanKeySection" style="margin-bottom:10px;">
-      <p style="font-size:12px;color:#555;font-weight:500;margin:0 0 4px;">API key</p>
-      <input type="password" id="scanKeyIn" placeholder="sk-ant-..." autocomplete="off" style="width:100%;height:42px;border:1px solid #B4B2A9;border-radius:10px;padding:0 12px;font-size:16px;background:#fff;color:#111;-webkit-appearance:none;" />
-      <p style="font-size:11px;color:#888;margin:4px 0 0;">Saved on this device after first entry</p>
+    <div id="scanKeySection" style="margin-bottom:12px;background:#f5f9ff;border:1px solid #B5D4F4;border-radius:10px;padding:10px;">
+      <p style="font-size:12px;color:#185FA5;font-weight:700;margin:0 0 6px;">Anthropic API Key</p>
+      <input type="text" id="scanKeyIn" placeholder="Paste your sk-ant-... key here" autocomplete="off" style="width:100%;height:42px;border:1px solid #B4B2A9;border-radius:10px;padding:0 12px;font-size:14px;background:#fff;color:#111;-webkit-appearance:none;margin-bottom:4px;" />
+      <p style="font-size:11px;color:#888;margin:0;">Saved on this device. Get a key at console.anthropic.com</p>
     </div>
     <img id="scanPreviewImg" class="scan-preview" alt="preview" />
     <p class="scan-status" id="scanStatusTxt">Choose a photo of your arbor slip</p>
@@ -917,12 +917,13 @@ ge('historyArborList').addEventListener('click', function(e) {
 ge('scanOpenBtn').addEventListener('click', function() {
   scanData = null;
   ge('scanPreviewImg').className = 'scan-preview';
-  ge('scanStatusTxt').textContent = 'Choose a photo of your arbor slip';
+  ge('scanStatusTxt').textContent = 'Enter your API key then choose a photo';
   ge('scanStatusTxt').className = 'scan-status';
   ge('scanResBox').className = 'scan-res';
-  ge('scanRow2').style.display = 'none'; ge('scanRow1').style.display = '';
+  ge('scanRow2').style.display = 'none';
+  ge('scanRow1').style.display = '';
+  ge('scanKeySection').style.display = '';
   ge('scanKeyIn').value = loadKey();
-  ge('scanKeySection').style.display = loadKey() ? 'none' : '';
   ge('scanOv').classList.add('open');
 });
 ge('scanCancelBtn').addEventListener('click', function() { ge('scanOv').classList.remove('open'); });
