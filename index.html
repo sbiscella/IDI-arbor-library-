@@ -133,8 +133,8 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
 .scan-btn-sec { background: transparent; color: #0C2D5A; }
 </style>
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div class="app">
@@ -284,6 +284,7 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
 </div>
 
 <script>
+window.onload = function() {
 /* ── FIREBASE INIT ── */
 var firebaseConfig = {
   apiKey: "AIzaSyBcmcJz8R0r7qa5q9lrbO1RdIy8XvkTzlQ",
@@ -991,6 +992,7 @@ refreshOffset();
 refreshRemainder();
 loadArbors();
 loadRuns();
+}; /* end window.onload */
 </script>
 </body>
 </html>
