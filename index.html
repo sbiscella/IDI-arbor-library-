@@ -237,6 +237,11 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
 <div class="scan-ov" id="scanOv">
   <div class="scan-box">
     <p class="scan-title">&#128247; Scan arbor paper</p>
+    <div id="scanKeySection" style="margin-bottom:10px;">
+      <p style="font-size:12px;color:#555;font-weight:500;margin:0 0 4px;">API key</p>
+      <input type="password" id="scanKeyIn" placeholder="sk-ant-..." autocomplete="off" style="width:100%;height:42px;border:1px solid #B4B2A9;border-radius:10px;padding:0 12px;font-size:16px;background:#fff;color:#111;-webkit-appearance:none;" />
+      <p style="font-size:11px;color:#888;margin:4px 0 0;">Saved on this device after first entry</p>
+    </div>
     <img id="scanPreviewImg" class="scan-preview" alt="preview" />
     <p class="scan-status" id="scanStatusTxt">Choose a photo of your arbor slip</p>
     <div class="scan-res" id="scanResBox">
@@ -383,11 +388,11 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function loadKey() {
-  var p1 = 'sk-ant-api03-';
-  var p2 = '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';
-  return p1 + p2;
+  try { return localStorage.getItem('idi_api_key') || ''; } catch(e) { return ''; }
 }
-function saveKey(k) {}
+function saveKey(k) {
+  try { localStorage.setItem('idi_api_key', k); } catch(e) {}
+}
 function todayStr() {
   var t = new Date();
   var mm = t.getMonth() + 1; var dd = t.getDate();
@@ -916,6 +921,8 @@ ge('scanOpenBtn').addEventListener('click', function() {
   ge('scanStatusTxt').className = 'scan-status';
   ge('scanResBox').className = 'scan-res';
   ge('scanRow2').style.display = 'none'; ge('scanRow1').style.display = '';
+  ge('scanKeyIn').value = loadKey();
+  ge('scanKeySection').style.display = loadKey() ? 'none' : '';
   ge('scanOv').classList.add('open');
 });
 ge('scanCancelBtn').addEventListener('click', function() { ge('scanOv').classList.remove('open'); });
@@ -926,7 +933,9 @@ ge('scanRetryBtn').addEventListener('click', function() {
   ge('scanFileIn').value = '';
 });
 ge('scanChooseBtn').addEventListener('click', function() {
-  ge('scanFileIn').click();
+  var k = ge('scanKeyIn').value.trim();
+  if (!k) { ge('scanStatusTxt').textContent = 'Please enter your API key first.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanKeySection').style.display = ''; return; }
+  saveKey(k); ge('scanKeySection').style.display = 'none'; ge('scanFileIn').click();
 });
 ge('scanFileIn').addEventListener('change', function(e) {
   var file = e.target.files && e.target.files[0]; if (!file) return;
