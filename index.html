@@ -935,8 +935,19 @@ ge('scanRetryBtn').addEventListener('click', function() {
 });
 ge('scanChooseBtn').addEventListener('click', function() {
   var k = ge('scanKeyIn').value.trim();
-  if (!k) { ge('scanStatusTxt').textContent = 'Please enter your API key first.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanKeySection').style.display = ''; return; }
-  saveKey(k); ge('scanKeySection').style.display = 'none'; ge('scanFileIn').click();
+  if (!k) { ge('scanStatusTxt').textContent = 'Please enter your API key first.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; return; }
+  saveKey(k);
+  ge('scanFileIn').click();
+});
+
+ge('scanKeyIn').addEventListener('change', function() {
+  var k = this.value.trim();
+  if (k) saveKey(k);
+});
+
+ge('scanKeyIn').addEventListener('blur', function() {
+  var k = this.value.trim();
+  if (k) saveKey(k);
 });
 ge('scanFileIn').addEventListener('change', function(e) {
   var file = e.target.files && e.target.files[0]; if (!file) return;
@@ -969,7 +980,10 @@ ge('scanUseBtn').addEventListener('click', function() {
   ge('scanOv').classList.remove('open'); window.scrollTo(0, 0);
 });
 function callAI(b64, mt) {
-  var key = loadKey();
+  var key = '';
+  try { key = localStorage.getItem('idi_api_key') || ''; } catch(e) {}
+  if (!key) key = ge('scanKeyIn') ? ge('scanKeyIn').value.trim() : '';
+  if (!key) { ge('scanStatusTxt').textContent = 'No API key found. Please enter your key and try again.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = ''; return; }
   var prompt = 'This is a handwritten rip saw arbor slip from a wood factory. Extract all info and return ONLY a JSON object with no extra text. Keys: name (string, arbor name/ID or empty), species (string, wood species or empty), sizes (array of strings, the rip sizes separated by | bars, include duplicates), offset (string, value after Off or Offset label, or empty), remainder (string, value after R. or R: label, or empty). Return only the JSON.';
   var body = JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 800, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: mt, data: b64 } }, { type: 'text', text: prompt }] }] });
   var xhr = new XMLHttpRequest();
