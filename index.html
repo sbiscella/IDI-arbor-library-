@@ -132,6 +132,9 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
 .scan-btn-prim { background: #0C2D5A; color: #fff; }
 .scan-btn-sec { background: transparent; color: #0C2D5A; }
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div class="app">
@@ -234,11 +237,6 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
 <div class="scan-ov" id="scanOv">
   <div class="scan-box">
     <p class="scan-title">&#128247; Scan arbor paper</p>
-    <div id="scanKeySection">
-      <p class="scan-key-lbl">Anthropic API key</p>
-      <input type="password" id="scanKeyIn" class="scan-key-input" placeholder="sk-ant-..." autocomplete="off" />
-      <p class="scan-key-hint">Enter once — saved on your device only. Get a free key at console.anthropic.com</p>
-    </div>
     <img id="scanPreviewImg" class="scan-preview" alt="preview" />
     <p class="scan-status" id="scanStatusTxt">Choose a photo of your arbor slip</p>
     <div class="scan-res" id="scanResBox">
@@ -284,10 +282,6 @@ input[type=text]:focus, input[type=password]:focus { outline: none; border-color
     <div class="kp-acts" id="kpActs"></div>
   </div>
 </div>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
 /* ── FIREBASE INIT ── */
@@ -387,8 +381,8 @@ function ge(id) { return document.getElementById(id); }
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function loadKey() { try { return localStorage.getItem('idi_api_key') || ''; } catch(e) { return ''; } }
-function saveKey(k) { try { localStorage.setItem('idi_api_key', k); } catch(e) {} }
+function loadKey() { return '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'; }
+function saveKey(k) {}
 function todayStr() {
   var t = new Date();
   var mm = t.getMonth() + 1; var dd = t.getDate();
@@ -917,7 +911,6 @@ ge('scanOpenBtn').addEventListener('click', function() {
   ge('scanStatusTxt').className = 'scan-status';
   ge('scanResBox').className = 'scan-res';
   ge('scanRow2').style.display = 'none'; ge('scanRow1').style.display = '';
-  ge('scanKeyIn').value = loadKey(); ge('scanKeySection').style.display = '';
   ge('scanOv').classList.add('open');
 });
 ge('scanCancelBtn').addEventListener('click', function() { ge('scanOv').classList.remove('open'); });
@@ -925,12 +918,10 @@ ge('scanRetryBtn').addEventListener('click', function() {
   scanData = null; ge('scanPreviewImg').className = 'scan-preview';
   ge('scanStatusTxt').textContent = 'Choose a photo of your arbor slip'; ge('scanStatusTxt').className = 'scan-status';
   ge('scanResBox').className = 'scan-res'; ge('scanRow2').style.display = 'none'; ge('scanRow1').style.display = '';
-  ge('scanKeySection').style.display = ''; ge('scanFileIn').value = '';
+  ge('scanFileIn').value = '';
 });
 ge('scanChooseBtn').addEventListener('click', function() {
-  var k = ge('scanKeyIn').value.trim();
-  if (!k) { ge('scanStatusTxt').textContent = 'Please enter your API key first.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; return; }
-  saveKey(k); ge('scanFileIn').click();
+  ge('scanFileIn').click();
 });
 ge('scanFileIn').addEventListener('change', function(e) {
   var file = e.target.files && e.target.files[0]; if (!file) return;
@@ -938,7 +929,7 @@ ge('scanFileIn').addEventListener('change', function(e) {
   reader.onload = function(ev) {
     var dataUrl = ev.target.result;
     ge('scanPreviewImg').src = dataUrl; ge('scanPreviewImg').className = 'scan-preview scan-preview-show';
-    ge('scanRow1').style.display = 'none'; ge('scanKeySection').style.display = 'none';
+    ge('scanRow1').style.display = 'none'; 
     ge('scanStatusTxt').textContent = 'Compressing image...'; ge('scanStatusTxt').className = 'scan-status scan-status-go';
     var img = new Image();
     img.onload = function() {
@@ -948,7 +939,7 @@ ge('scanFileIn').addEventListener('change', function(e) {
       var compressed = canvas.toDataURL('image/jpeg', 0.85); var b64 = compressed.split(',')[1];
       ge('scanStatusTxt').textContent = 'Reading your arbor slip...'; callAI(b64, 'image/jpeg');
     };
-    img.onerror = function() { ge('scanStatusTxt').textContent = 'Could not load image. Try again.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = ''; ge('scanKeySection').style.display = ''; };
+    img.onerror = function() { ge('scanStatusTxt').textContent = 'Could not load image. Try again.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = '';  };
     img.src = dataUrl;
   };
   reader.readAsDataURL(file);
@@ -974,10 +965,10 @@ function callAI(b64, mt) {
   xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
-    if (xhr.status === 0) { ge('scanStatusTxt').textContent = 'Blocked — open via GitHub Pages (https://), not local file.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = ''; ge('scanKeySection').style.display = ''; return; }
+    if (xhr.status === 0) { ge('scanStatusTxt').textContent = 'Blocked — open via GitHub Pages (https://), not local file.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = '';  return; }
     try {
       var data = JSON.parse(xhr.responseText);
-      if (data.error) { ge('scanStatusTxt').textContent = 'API error: ' + (data.error.message || 'Check your API key.'); ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = ''; ge('scanKeySection').style.display = ''; return; }
+      if (data.error) { ge('scanStatusTxt').textContent = 'API error: ' + (data.error.message || 'Check your API key.'); ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = '';  return; }
       var text = ''; if (data.content) { for (var i = 0; i < data.content.length; i++) { if (data.content[i].type === 'text') { text = data.content[i].text; break; } } }
       text = text.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
       var parsed = JSON.parse(text); scanData = parsed;
@@ -985,11 +976,11 @@ function callAI(b64, mt) {
       ge('srSizes').textContent = (parsed.sizes && parsed.sizes.length) ? parsed.sizes.join(' | ') : '(not found)';
       ge('srOffset').textContent = parsed.offset || '(not found)'; ge('srRemainder').textContent = parsed.remainder || '(not found)';
       ge('scanResBox').className = 'scan-res scan-res-show'; ge('scanStatusTxt').textContent = 'Review below, then tap Use or Retry.'; ge('scanStatusTxt').className = 'scan-status scan-status-ok'; ge('scanRow2').style.display = '';
-    } catch(ex) { ge('scanStatusTxt').textContent = 'Could not read the slip. Try a clearer photo.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = ''; ge('scanKeySection').style.display = ''; }
+    } catch(ex) { ge('scanStatusTxt').textContent = 'Could not read the slip. Try a clearer photo.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = '';  }
   };
-  xhr.onerror = function() { ge('scanStatusTxt').textContent = 'Network error. Check your connection.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = ''; ge('scanKeySection').style.display = ''; };
+  xhr.onerror = function() { ge('scanStatusTxt').textContent = 'Network error. Check your connection.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = '';  };
   xhr.timeout = 30000;
-  xhr.ontimeout = function() { ge('scanStatusTxt').textContent = 'Request timed out. Try again.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = ''; ge('scanKeySection').style.display = ''; };
+  xhr.ontimeout = function() { ge('scanStatusTxt').textContent = 'Request timed out. Try again.'; ge('scanStatusTxt').className = 'scan-status scan-status-err'; ge('scanRow1').style.display = '';  };
   xhr.send(body);
 }
 
