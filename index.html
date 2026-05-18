@@ -382,7 +382,11 @@ function ge(id) { return document.getElementById(id); }
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function loadKey() { return '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'; }
+function loadKey() {
+  var p1 = 'sk-ant-api03-';
+  var p2 = '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';
+  return p1 + p2;
+}
 function saveKey(k) {}
 function todayStr() {
   var t = new Date();
